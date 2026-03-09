@@ -17,7 +17,22 @@ const subjectIcons: Record<string, typeof Database> = {
 export default function Dashboard() {
   const { userId } = useParams<{ userId: string }>();
   const [, setLocation] = useLocation();
-  const [expandedSubject, setExpandedSubject] = useState<number | null>(null);
+  const [expandedSubject, setExpandedSubject] = useState<number | null>(() => {
+    const stored = sessionStorage.getItem(`expandedSubject-${userId}`);
+    if (!stored) return null;
+    const parsed = parseInt(stored);
+    return isNaN(parsed) ? null : parsed;
+  });
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(`expandedSubject-${userId}`);
+    if (stored) {
+      const parsed = parseInt(stored);
+      setExpandedSubject(isNaN(parsed) ? null : parsed);
+    } else {
+      setExpandedSubject(null);
+    }
+  }, [userId]);
 
   const { data: user, isLoading: userLoading } = useQuery<TrainingUser>({
     queryKey: ["/api/users", userId],
@@ -137,7 +152,15 @@ export default function Dashboard() {
                 <Card
                   className={`cursor-pointer transition-all hover:shadow-md ${isSubjectComplete ? "border-green-300 dark:border-green-700" : ""}`}
                   data-testid={`card-subject-${subject.id}`}
-                  onClick={() => setExpandedSubject(isExpanded ? null : subject.id)}
+                  onClick={() => {
+                    const newVal = isExpanded ? null : subject.id;
+                    setExpandedSubject(newVal);
+                    if (newVal !== null) {
+                      sessionStorage.setItem(`expandedSubject-${userId}`, String(newVal));
+                    } else {
+                      sessionStorage.removeItem(`expandedSubject-${userId}`);
+                    }
+                  }}
                 >
                   <CardContent className="p-5">
                     <div className="flex items-center gap-4">

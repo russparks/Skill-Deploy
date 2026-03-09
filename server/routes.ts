@@ -49,7 +49,12 @@ export async function registerRoutes(
           });
           return res.json(reset);
         }
-        return res.json(existing);
+        const updated = await storage.updateTrainingUser(existing.id, {
+          name: data.name,
+          organization: data.organization || null,
+          scheduledDeletionAt,
+        });
+        return res.json(updated);
       }
 
       if (existing && existing.isDeleted) {
@@ -296,7 +301,7 @@ export async function registerRoutes(
       const section = await storage.getTrainingSection(sectionId);
       if (!section) return res.status(404).json({ message: "Section not found" });
 
-      const questions = await storage.getQuestionsBySection(sectionId);
+      const questions = await storage.getSectionQuestions(sectionId);
       if (questions.length > 0) {
         const { quizAnswers } = req.body;
         if (!quizAnswers || typeof quizAnswers !== "object") {
