@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import crypto from "crypto";
-import { generateCertificatePDF } from "./services/certificateGenerator";
+import { generateCertificatePDF, generateTrainingMaterialPDF } from "./services/certificateGenerator";
 import { sendCertificateEmail } from "./services/emailService";
 import { sendCompletionEmail } from "./services/emailService";
 import { runCleanup } from "./services/dataCleanup";
@@ -258,6 +258,61 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/training-material/download", async (_req, res) => {
+    try {
+      const sections = await storage.getAllTrainingSections();
+      if (sections.length === 0) {
+        return res.status(404).json({ message: "No training material available" });
+      }
+      const pdfBuffer = await generateTrainingMaterialPDF(sections);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", 'attachment; filename="training-material.pdf"');
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/certificates/download-all/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) return res.status(400).json({ message: "Invalid user ID" });
+
+      const user = await storage.getTrainingUser(userId);
+      if (!user || user.isDeleted) return res.status(404).json({ message: "User not found" });
+
+      const sections = await storage.getAllTrainingSections();
+      const progress = await storage.getUserProgress(userId);
+      const completedProgress = progress.filter((p) => p.completedAt);
+
+      if (completedProgress.length === 0) {
+        return res.status(400).json({ message: "No completed sections" });
+      }
+
+      const { generateAllCertificatesPDF } = await import("./services/certificateGenerator");
+      const certEntries = completedProgress
+        .map((prog) => {
+          const section = sections.find((s) => s.id === prog.sectionId);
+          if (!section || !prog.completedAt) return null;
+          return {
+            userName: user.name,
+            sectionTitle: section.title,
+            completionDate: prog.completedAt,
+            organization: user.organization,
+          };
+        })
+        .filter(Boolean) as Array<{ userName: string; sectionTitle: string; completionDate: Date; organization: string | null }>;
+
+      const pdfBuffer = await generateAllCertificatesPDF(certEntries);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", 'attachment; filename="all-certificates.pdf"');
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/users/:id/complete", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -298,7 +353,7 @@ export async function registerRoutes(
 
       try {
         const baseUrl = `${req.protocol}://${req.get("host")}`;
-        await sendCompletionEmail(user.email, user.name, referenceCode, baseUrl);
+        await sendCompletionEmail(user.email, user.name, referenceCode, baseUrl, id);
       } catch (emailErr) {
         // Non-blocking: log but don't fail completion
       }

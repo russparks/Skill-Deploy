@@ -49,6 +49,8 @@ A responsive training platform that collects temporary user data (email, company
 - `GET /api/sections` - List training sections
 - `POST /api/progress/complete` - Mark section complete
 - `POST /api/progress/generate-certificate` - Generate PDF certificate
+- `GET /api/training-material/download` - Download all training content as PDF
+- `GET /api/certificates/download-all/:userId` - Download all certificates as merged PDF
 - `DELETE /api/users/:id/data` - Delete user data
 - `POST /api/cleanup/run` - Manual cleanup trigger
 

@@ -59,7 +59,8 @@ export async function sendCompletionEmail(
   to: string,
   userName: string,
   referenceCode: string,
-  returnUrl: string
+  returnUrl: string,
+  userId: number
 ): Promise<boolean> {
   const resend = getResendClient();
 
@@ -72,12 +73,19 @@ export async function sendCompletionEmail(
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: `Training Complete - Your Reference Code: ${referenceCode}`,
+      subject: `Training Complete - Your Unique Code`,
       html: `
         <h2>Congratulations, ${userName}!</h2>
         <p>You have successfully completed all training modules.</p>
         <p>Your unique reference code is: <strong style="font-size: 1.4em; letter-spacing: 2px;">${referenceCode}</strong></p>
         <p>Please save this code for your records. You can use it to verify your training completion.</p>
+        <br/>
+        <h3>Useful Links</h3>
+        <ul>
+          <li><strong>Download Training Material:</strong> <a href="${returnUrl}/api/training-material/download">Download Training PDF</a></li>
+          <li><strong>Download Certificates:</strong> <a href="${returnUrl}/api/certificates/download-all/${userId}">Download All Certificates</a></li>
+          <li><strong>Share Training:</strong> Copy this link to share the training with others: <a href="${returnUrl}">${returnUrl}</a></li>
+        </ul>
         <br/>
         <p>If you need to retake the training in the future, you can return here:</p>
         <p><a href="${returnUrl}">${returnUrl}</a></p>

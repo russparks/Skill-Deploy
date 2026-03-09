@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, CheckCircle, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, Clock, RotateCcw } from "lucide-react";
 
 export default function TrainingViewer() {
   const { userId, sectionId } = useParams<{ userId: string; sectionId: string }>();
@@ -36,15 +36,7 @@ export default function TrainingViewer() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/progress", userId] });
-      toast({ title: "Section completed!", description: "Great job! Moving to the next section." });
-
-      if (sections && section) {
-        const currentIndex = sections.findIndex((s) => s.id === section.id);
-        if (currentIndex < sections.length - 1) {
-          const nextSection = sections[currentIndex + 1];
-          setTimeout(() => setLocation(`/training/${userId}/${nextSection.id}`), 1500);
-        }
-      }
+      toast({ title: "Section completed!", description: "Great job!" });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -146,7 +138,7 @@ export default function TrainingViewer() {
           <div />
         )}
 
-        {!isCompleted ? (
+        {!isCompleted && !completeMutation.isSuccess ? (
           <Button
             data-testid="button-complete"
             onClick={() => completeMutation.mutate()}
@@ -155,20 +147,34 @@ export default function TrainingViewer() {
             {completeMutation.isPending ? "Completing..." : "Mark Complete"}
             <CheckCircle className="ml-2 h-4 w-4" />
           </Button>
-        ) : nextSection ? (
-          <Link href={`/training/${userId}/${nextSection.id}`}>
-            <Button data-testid="button-next-section">
-              Next Module
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
         ) : (
-          <Link href={`/certificates/${userId}`}>
-            <Button data-testid="button-view-certificates">
-              View Certificates
-              <ChevronRight className="ml-1 h-4 w-4" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              data-testid="button-redo-module"
+              onClick={() => {
+                window.scrollTo(0, 0);
+              }}
+            >
+              <RotateCcw className="mr-1 h-4 w-4" />
+              Redo Module
             </Button>
-          </Link>
+            {nextSection ? (
+              <Link href={`/training/${userId}/${nextSection.id}`}>
+                <Button data-testid="button-next-section">
+                  Next Module
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Link href={`/complete/${userId}`}>
+                <Button data-testid="button-finish-training">
+                  Finish Training
+                  <CheckCircle className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            )}
+          </div>
         )}
       </div>
     </div>

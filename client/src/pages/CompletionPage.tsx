@@ -5,7 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Copy, Award, ArrowLeft } from "lucide-react";
+import { CheckCircle, Copy, Award, ArrowLeft, Download, BookOpen, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
@@ -39,6 +39,50 @@ export default function CompletionPage() {
     if (referenceCode) {
       navigator.clipboard.writeText(referenceCode);
       toast({ title: "Copied", description: "Reference code copied to clipboard." });
+    }
+  };
+
+  const shareLink = () => {
+    const url = window.location.origin;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Copied", description: "Training link copied to clipboard. Share it with others!" });
+  };
+
+  const downloadCertificates = async () => {
+    try {
+      const res = await fetch(`/api/certificates/download-all/${userId}`);
+      if (!res.ok) throw new Error("Failed to download certificates");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "all-certificates.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast({ title: "Downloaded", description: "All certificates downloaded." });
+    } catch {
+      toast({ title: "Error", description: "Failed to download certificates.", variant: "destructive" });
+    }
+  };
+
+  const downloadTraining = async () => {
+    try {
+      const res = await fetch("/api/training-material/download");
+      if (!res.ok) throw new Error("Failed to download training material");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "training-material.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast({ title: "Downloaded", description: "Training material downloaded." });
+    } catch {
+      toast({ title: "Error", description: "Failed to download training material.", variant: "destructive" });
     }
   };
 
@@ -104,12 +148,18 @@ export default function CompletionPage() {
           ) : null}
 
           <div className="border-t pt-4 space-y-3">
-            <Link href={`/certificates/${userId}`}>
-              <Button variant="outline" className="w-full" data-testid="link-view-certificates">
-                <Award className="mr-2 h-4 w-4" />
-                View & Download Certificates
-              </Button>
-            </Link>
+            <Button variant="outline" className="w-full" onClick={downloadCertificates} data-testid="button-download-certificates">
+              <Award className="mr-2 h-4 w-4" />
+              Download Certificates
+            </Button>
+            <Button variant="outline" className="w-full" onClick={downloadTraining} data-testid="button-download-training">
+              <BookOpen className="mr-2 h-4 w-4" />
+              Download Training Material
+            </Button>
+            <Button variant="outline" className="w-full" onClick={shareLink} data-testid="button-share-training">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share Training Link
+            </Button>
             <Link href="/">
               <Button variant="ghost" className="w-full" data-testid="link-return-home">
                 <ArrowLeft className="mr-2 h-4 w-4" />

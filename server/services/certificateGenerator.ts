@@ -7,6 +7,14 @@ interface CertificateOptions {
   organization?: string | null;
 }
 
+interface TrainingSection {
+  title: string;
+  description?: string | null;
+  content: string;
+  orderIndex: number;
+  estimatedMinutes?: number | null;
+}
+
 export async function generateCertificatePDF(options: CertificateOptions): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -103,4 +111,124 @@ export async function generateCertificatePDF(options: CertificateOptions): Promi
 
     doc.end();
   });
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "  • ")
+    .replace(/<\/h[1-6]>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export async function generateTrainingMaterialPDF(sections: TrainingSection[]): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: "A4",
+      margins: { top: 60, bottom: 60, left: 60, right: 60 },
+    });
+
+    const chunks: Buffer[] = [];
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    const width = doc.page.width - 120;
+
+    doc.fontSize(28)
+      .fillColor("#0c4a6e")
+      .text("Privacy Training Material", { align: "center", width });
+
+    doc.moveDown(0.5);
+
+    doc.fontSize(12)
+      .fillColor("#64748b")
+      .text("Complete Training Guide", { align: "center", width });
+
+    doc.moveDown(2);
+
+    doc.moveTo(60, doc.y)
+      .lineTo(doc.page.width - 60, doc.y)
+      .lineWidth(1)
+      .strokeColor("#e2e8f0")
+      .stroke();
+
+    doc.moveDown(1);
+
+    const sorted = [...sections].sort((a, b) => a.orderIndex - b.orderIndex);
+
+    sorted.forEach((section, index) => {
+      if (index > 0) {
+        doc.addPage();
+      }
+
+      doc.fontSize(18)
+        .fillColor("#0c4a6e")
+        .text(`Module ${index + 1}: ${section.title}`, { width });
+
+      if (section.description) {
+        doc.moveDown(0.5);
+        doc.fontSize(11)
+          .fillColor("#64748b")
+          .text(section.description, { width });
+      }
+
+      if (section.estimatedMinutes) {
+        doc.moveDown(0.3);
+        doc.fontSize(9)
+          .fillColor("#94a3b8")
+          .text(`Estimated time: ${section.estimatedMinutes} minutes`, { width });
+      }
+
+      doc.moveDown(1);
+
+      doc.moveTo(60, doc.y)
+        .lineTo(doc.page.width - 60, doc.y)
+        .lineWidth(0.5)
+        .strokeColor("#e2e8f0")
+        .stroke();
+
+      doc.moveDown(1);
+
+      const plainContent = stripHtml(section.content);
+      doc.fontSize(11)
+        .fillColor("#1e293b")
+        .text(plainContent, { width, lineGap: 4 });
+    });
+
+    doc.end();
+  });
+}
+
+export async function generateAllCertificatesPDF(entries: CertificateOptions[]): Promise<Buffer> {
+  const buffers: Buffer[] = [];
+
+  for (const entry of entries) {
+    const buf = await generateCertificatePDF(entry);
+    buffers.push(buf);
+  }
+
+  if (buffers.length === 1) return buffers[0];
+
+  const PDFDoc = (await import("pdf-lib")).PDFDocument;
+  const merged = await PDFDoc.create();
+
+  for (const buf of buffers) {
+    const source = await PDFDoc.load(buf);
+    const pages = await merged.copyPages(source, source.getPageIndices());
+    pages.forEach((page) => merged.addPage(page));
+  }
+
+  const mergedBytes = await merged.save();
+  return Buffer.from(mergedBytes);
 }
