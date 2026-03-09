@@ -1,31 +1,13 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { log } from "../index";
 
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter(): nodemailer.Transporter | null {
-  if (transporter) return transporter;
-
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = process.env.SMTP_PORT;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (smtpHost && smtpUser && smtpPass) {
-    transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: parseInt(smtpPort || "587", 10),
-      secure: smtpPort === "465",
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
-    return transporter;
-  }
-
-  return null;
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
 }
+
+const FROM_ADDRESS = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
 export async function sendCertificateEmail(
   to: string,
@@ -33,16 +15,16 @@ export async function sendCertificateEmail(
   sectionTitle: string,
   pdfBuffer: Buffer
 ): Promise<boolean> {
-  const transport = getTransporter();
+  const resend = getResendClient();
 
-  if (!transport) {
+  if (!resend) {
     log(`[Email Fallback] Would send certificate to ${to} for "${sectionTitle}" - No email service configured`, "email");
     return false;
   }
 
   try {
-    await transport.sendMail({
-      from: process.env.SMTP_FROM || "training@example.com",
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
       to,
       subject: `Training Certificate: ${sectionTitle}`,
       html: `
@@ -55,11 +37,16 @@ export async function sendCertificateEmail(
       attachments: [
         {
           filename: `certificate-${sectionTitle.replace(/\s+/g, "-").toLowerCase()}.pdf`,
-          content: pdfBuffer,
-          contentType: "application/pdf",
+          content: pdfBuffer.toString("base64"),
         },
       ],
     });
+
+    if (error) {
+      log(`Failed to send email to ${to}: ${JSON.stringify(error)}`, "email");
+      return false;
+    }
+
     log(`Certificate email sent to ${to} for "${sectionTitle}"`, "email");
     return true;
   } catch (error) {
@@ -74,16 +61,16 @@ export async function sendCompletionEmail(
   referenceCode: string,
   returnUrl: string
 ): Promise<boolean> {
-  const transport = getTransporter();
+  const resend = getResendClient();
 
-  if (!transport) {
+  if (!resend) {
     log(`[Email Fallback] Would send completion email to ${to} with ref ${referenceCode} - No email service configured`, "email");
     return false;
   }
 
   try {
-    await transport.sendMail({
-      from: process.env.SMTP_FROM || "training@example.com",
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
       to,
       subject: `Training Complete - Your Reference Code: ${referenceCode}`,
       html: `
@@ -98,6 +85,12 @@ export async function sendCompletionEmail(
         <p><em>Privacy-Focused Training Platform</em></p>
       `,
     });
+
+    if (error) {
+      log(`Failed to send completion email to ${to}: ${JSON.stringify(error)}`, "email");
+      return false;
+    }
+
     log(`Completion email sent to ${to} with ref ${referenceCode}`, "email");
     return true;
   } catch (error) {
