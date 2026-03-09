@@ -24,8 +24,8 @@ export async function runCleanup(): Promise<{ deletedCount: number }> {
 }
 
 export function startCleanupCron() {
-  cron.schedule("0 0 * * *", async () => {
+  cron.schedule("0 * * * *", async () => {
     await runCleanup();
   });
-  log("Data cleanup cron job scheduled (daily at midnight)", "cleanup");
+  log("Data cleanup cron job scheduled (hourly)", "cleanup");
 }

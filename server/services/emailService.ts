@@ -8,6 +8,7 @@ function getResendClient(): Resend | null {
 }
 
 const FROM_ADDRESS = process.env.EMAIL_FROM || "onboarding@resend.dev";
+const ADMIN_EMAIL = "info@axislabs.co.uk";
 
 export async function sendCertificateEmail(
   to: string,
@@ -32,7 +33,7 @@ export async function sendCertificateEmail(
         <p>You have successfully completed the training module: <strong>${sectionTitle}</strong></p>
         <p>Your certificate is attached to this email.</p>
         <br/>
-        <p><em>Privacy-Focused Training Platform</em></p>
+        <p><em>Quick Skill - Onboarding The Works</em></p>
       `,
       attachments: [
         {
@@ -87,10 +88,7 @@ export async function sendCompletionEmail(
           <li><strong>Share Training:</strong> Copy this link to share the training with others: <a href="${returnUrl}">${returnUrl}</a></li>
         </ul>
         <br/>
-        <p>If you need to retake the training in the future, you can return here:</p>
-        <p><a href="${returnUrl}">${returnUrl}</a></p>
-        <br/>
-        <p><em>Privacy-Focused Training Platform</em></p>
+        <p><em>Quick Skill - Onboarding The Works</em></p>
       `,
     });
 
@@ -103,6 +101,51 @@ export async function sendCompletionEmail(
     return true;
   } catch (error) {
     log(`Failed to send completion email to ${to}: ${error}`, "email");
+    return false;
+  }
+}
+
+export async function sendAdminNotificationEmail(
+  userName: string,
+  referenceCode: string
+): Promise<boolean> {
+  const resend = getResendClient();
+
+  if (!resend) {
+    log(`[Email Fallback] Would send admin notification for ${userName} - No email service configured`, "email");
+    return false;
+  }
+
+  const initials = userName
+    .split(" ")
+    .map((n) => n.charAt(0).toUpperCase())
+    .join("");
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: ADMIN_EMAIL,
+      subject: `Training Completed - ${initials}`,
+      html: `
+        <h3>Training Completion Notification</h3>
+        <p>A trainee has completed all training modules.</p>
+        <ul>
+          <li><strong>Initials:</strong> ${initials}</li>
+          <li><strong>URN:</strong> ${referenceCode}</li>
+        </ul>
+        <p><em>Quick Skill - Onboarding The Works</em></p>
+      `,
+    });
+
+    if (error) {
+      log(`Failed to send admin notification: ${JSON.stringify(error)}`, "email");
+      return false;
+    }
+
+    log(`Admin notification sent for ${initials} (${referenceCode})`, "email");
+    return true;
+  } catch (error) {
+    log(`Failed to send admin notification: ${error}`, "email");
     return false;
   }
 }

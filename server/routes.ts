@@ -4,8 +4,7 @@ import { storage } from "./storage";
 import { z } from "zod";
 import crypto from "crypto";
 import { generateCertificatePDF, generateTrainingMaterialPDF } from "./services/certificateGenerator";
-import { sendCertificateEmail } from "./services/emailService";
-import { sendCompletionEmail } from "./services/emailService";
+import { sendCertificateEmail, sendCompletionEmail, sendAdminNotificationEmail } from "./services/emailService";
 import { runCleanup } from "./services/dataCleanup";
 
 function generateReferenceCode(): string {
@@ -27,7 +26,7 @@ export async function registerRoutes(
       const schema = z.object({
         name: z.string().min(1),
         email: z.string().trim().toLowerCase().email(),
-        organization: z.string().optional().nullable(),
+        organization: z.string().min(1, "Organisation is required"),
       });
       const data = schema.parse(req.body);
 
@@ -35,7 +34,7 @@ export async function registerRoutes(
       const existing = await storage.getTrainingUserByEmail(trimmedEmail);
 
       const scheduledDeletionAt = new Date();
-      scheduledDeletionAt.setDate(scheduledDeletionAt.getDate() + 30);
+      scheduledDeletionAt.setHours(scheduledDeletionAt.getHours() + 24);
 
       if (existing && !existing.isDeleted) {
         if (existing.referenceCode) {
@@ -97,13 +96,68 @@ export async function registerRoutes(
     const now = new Date();
     const deletionDate = new Date(user.scheduledDeletionAt);
     const msRemaining = deletionDate.getTime() - now.getTime();
-    const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+    const hoursRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60)));
 
     res.json({
       scheduledDeletionAt: user.scheduledDeletionAt,
-      daysRemaining,
+      hoursRemaining,
       createdAt: user.createdAt,
     });
+  });
+
+  app.get("/api/subjects", async (_req, res) => {
+    const subjects = await storage.getAllTrainingSubjects();
+    res.json(subjects);
+  });
+
+  app.get("/api/subjects/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid subject ID" });
+    const subject = await storage.getTrainingSubject(id);
+    if (!subject) return res.status(404).json({ message: "Subject not found" });
+    res.json(subject);
+  });
+
+  app.post("/api/subjects", async (req, res) => {
+    try {
+      const schema = z.object({
+        title: z.string().min(1),
+        description: z.string().optional().nullable(),
+        icon: z.string().default("book"),
+        orderIndex: z.number().int(),
+      });
+      const data = schema.parse(req.body);
+      const subject = await storage.createTrainingSubject(data);
+      res.status(201).json(subject);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/subjects/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid subject ID" });
+    try {
+      const schema = z.object({
+        title: z.string().min(1).optional(),
+        description: z.string().optional().nullable(),
+        icon: z.string().optional(),
+        orderIndex: z.number().int().optional(),
+      });
+      const data = schema.parse(req.body);
+      const subject = await storage.updateTrainingSubject(id, data);
+      if (!subject) return res.status(404).json({ message: "Subject not found" });
+      res.json(subject);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/subjects/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid subject ID" });
+    await storage.deleteTrainingSubject(id);
+    res.json({ message: "Subject deleted" });
   });
 
   app.get("/api/sections", async (_req, res) => {
@@ -121,6 +175,13 @@ export async function registerRoutes(
     res.json(section);
   });
 
+  app.get("/api/sections/:id/questions", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid section ID" });
+    const questions = await storage.getSectionQuestions(id);
+    res.json(questions);
+  });
+
   app.post("/api/sections", async (req, res) => {
     try {
       const schema = z.object({
@@ -128,6 +189,7 @@ export async function registerRoutes(
         description: z.string().optional().nullable(),
         content: z.string().min(1),
         orderIndex: z.number().int(),
+        subjectId: z.number().int().optional().nullable(),
         videoUrl: z.string().optional().nullable(),
         estimatedMinutes: z.number().int().optional(),
       });
@@ -149,6 +211,7 @@ export async function registerRoutes(
         description: z.string().optional().nullable(),
         content: z.string().min(1).optional(),
         orderIndex: z.number().int().optional(),
+        subjectId: z.number().int().optional().nullable(),
         videoUrl: z.string().optional().nullable(),
         estimatedMinutes: z.number().int().optional(),
       });
@@ -167,6 +230,48 @@ export async function registerRoutes(
 
     await storage.deleteTrainingSection(id);
     res.json({ message: "Section deleted" });
+  });
+
+  app.post("/api/sections/:id/questions", async (req, res) => {
+    const sectionId = parseInt(req.params.id);
+    if (isNaN(sectionId)) return res.status(400).json({ message: "Invalid section ID" });
+    try {
+      const schema = z.object({
+        questionText: z.string().min(1),
+        correctAnswer: z.boolean(),
+        orderIndex: z.number().int(),
+      });
+      const data = schema.parse(req.body);
+      const question = await storage.createSectionQuestion({ ...data, sectionId });
+      res.status(201).json(question);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/questions/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid question ID" });
+    try {
+      const schema = z.object({
+        questionText: z.string().min(1).optional(),
+        correctAnswer: z.boolean().optional(),
+        orderIndex: z.number().int().optional(),
+      });
+      const data = schema.parse(req.body);
+      const question = await storage.updateSectionQuestion(id, data);
+      if (!question) return res.status(404).json({ message: "Question not found" });
+      res.json(question);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/questions/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid question ID" });
+    await storage.deleteSectionQuestion(id);
+    res.json({ message: "Question deleted" });
   });
 
   app.get("/api/progress/:userId", async (req, res) => {
@@ -190,6 +295,19 @@ export async function registerRoutes(
 
       const section = await storage.getTrainingSection(sectionId);
       if (!section) return res.status(404).json({ message: "Section not found" });
+
+      const questions = await storage.getQuestionsBySection(sectionId);
+      if (questions.length > 0) {
+        const { quizAnswers } = req.body;
+        if (!quizAnswers || typeof quizAnswers !== "object") {
+          return res.status(400).json({ message: "Quiz answers are required for this section" });
+        }
+        for (const q of questions) {
+          if (quizAnswers[q.id] !== q.correctAnswer) {
+            return res.status(400).json({ message: "All quiz questions must be answered correctly" });
+          }
+        }
+      }
 
       let progress = await storage.getProgressByUserAndSection(userId, sectionId);
 
@@ -278,6 +396,8 @@ export async function registerRoutes(
       if (sections.length === 0) {
         return res.status(404).json({ message: "No training material available" });
       }
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
       const pdfBuffer = await generateTrainingMaterialPDF(sections);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", 'attachment; filename="training-material.pdf"');
@@ -317,6 +437,7 @@ export async function registerRoutes(
         })
         .filter(Boolean) as Array<{ userName: string; sectionTitle: string; completionDate: Date; organization: string | null }>;
 
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       const pdfBuffer = await generateAllCertificatesPDF(certEntries);
 
       res.setHeader("Content-Type", "application/pdf");
@@ -369,7 +490,11 @@ export async function registerRoutes(
         const baseUrl = `${req.protocol}://${req.get("host")}`;
         await sendCompletionEmail(user.email, user.name, referenceCode, baseUrl, id);
       } catch (emailErr) {
-        // Non-blocking: log but don't fail completion
+      }
+
+      try {
+        await sendAdminNotificationEmail(user.name, referenceCode);
+      } catch (adminEmailErr) {
       }
 
       res.json({ referenceCode: updated?.referenceCode, completedAt: updated?.completedAt });

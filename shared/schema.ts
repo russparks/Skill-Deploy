@@ -15,16 +15,34 @@ export const trainingUsers = pgTable("training_users", {
   isDeleted: boolean("is_deleted").default(false),
 });
 
+export const trainingSubjects = pgTable("training_subjects", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  icon: text("icon").notNull().default("book"),
+  orderIndex: integer("order_index").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const trainingSections = pgTable("training_sections", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
   content: text("content").notNull(),
   orderIndex: integer("order_index").notNull(),
+  subjectId: integer("subject_id").references(() => trainingSubjects.id),
   videoUrl: text("video_url"),
   estimatedMinutes: integer("estimated_minutes").default(10),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sectionQuestions = pgTable("section_questions", {
+  id: serial("id").primaryKey(),
+  sectionId: integer("section_id").notNull().references(() => trainingSections.id),
+  questionText: text("question_text").notNull(),
+  correctAnswer: boolean("correct_answer").notNull(),
+  orderIndex: integer("order_index").notNull(),
 });
 
 export const userProgress = pgTable("user_progress", {
@@ -54,10 +72,19 @@ export const insertTrainingUserSchema = createInsertSchema(trainingUsers).omit({
   completedAt: true,
 });
 
+export const insertTrainingSubjectSchema = createInsertSchema(trainingSubjects).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertTrainingSectionSchema = createInsertSchema(trainingSections).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertSectionQuestionSchema = createInsertSchema(sectionQuestions).omit({
+  id: true,
 });
 
 export const insertUserProgressSchema = createInsertSchema(userProgress).omit({
@@ -76,8 +103,14 @@ export const insertCertificateSchema = createInsertSchema(certificates).omit({
 export type InsertTrainingUser = z.infer<typeof insertTrainingUserSchema>;
 export type TrainingUser = typeof trainingUsers.$inferSelect;
 
+export type InsertTrainingSubject = z.infer<typeof insertTrainingSubjectSchema>;
+export type TrainingSubject = typeof trainingSubjects.$inferSelect;
+
 export type InsertTrainingSection = z.infer<typeof insertTrainingSectionSchema>;
 export type TrainingSection = typeof trainingSections.$inferSelect;
+
+export type InsertSectionQuestion = z.infer<typeof insertSectionQuestionSchema>;
+export type SectionQuestion = typeof sectionQuestions.$inferSelect;
 
 export type InsertUserProgress = z.infer<typeof insertUserProgressSchema>;
 export type UserProgress = typeof userProgress.$inferSelect;

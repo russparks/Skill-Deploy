@@ -4,18 +4,19 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { PrivacyNotice } from "@/components/PrivacyNotice";
-import { Shield } from "lucide-react";
+import { Zap } from "lucide-react";
+import { useState } from "react";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Valid email is required"),
-  organization: z.string().optional(),
+  organization: z.string().min(1, "Organisation is required"),
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
@@ -23,6 +24,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -50,21 +52,25 @@ export default function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-4">
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-1">
           <div className="flex items-center justify-center gap-2">
-            <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-semibold" data-testid="text-title">Privacy Training Platform</h1>
+            <Zap className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold" data-testid="text-title">Quick Skill</h1>
           </div>
-          <p className="text-muted-foreground text-sm">Register to begin your privacy training</p>
+          <p className="text-muted-foreground text-lg font-medium">Onboarding The Works</p>
         </div>
 
-        <PrivacyNotice />
-
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Register</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-6 space-y-5">
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold" data-testid="text-form-title">
+                Register for Data Management Training
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Fill out the form below to get started
+              </p>
+            </div>
+
             <Form {...form}>
               <form noValidate onSubmit={form.handleSubmit((data) => mutation.mutate({ ...data, email: data.email.trim() }))} className="space-y-4">
                 <FormField
@@ -98,19 +104,22 @@ export default function Register() {
                   name="organization"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Organization (optional)</FormLabel>
+                      <FormLabel>Organisation</FormLabel>
                       <FormControl>
-                        <Input data-testid="input-organization" placeholder="Your company or organization" {...field} />
+                        <Input data-testid="input-organization" placeholder="Your company or organisation" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                <PrivacyNotice checked={privacyAccepted} onCheckedChange={setPrivacyAccepted} />
+
                 <Button
                   data-testid="button-register"
                   type="submit"
                   className="w-full"
-                  disabled={mutation.isPending}
+                  disabled={mutation.isPending || !privacyAccepted}
                 >
                   {mutation.isPending ? "Registering..." : "Start Training"}
                 </Button>

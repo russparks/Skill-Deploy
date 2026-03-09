@@ -1,9 +1,11 @@
 import {
   type TrainingUser, type InsertTrainingUser,
+  type TrainingSubject, type InsertTrainingSubject,
   type TrainingSection, type InsertTrainingSection,
+  type SectionQuestion, type InsertSectionQuestion,
   type UserProgress, type InsertUserProgress,
   type Certificate, type InsertCertificate,
-  trainingUsers, trainingSections, userProgress, certificates,
+  trainingUsers, trainingSubjects, trainingSections, sectionQuestions, userProgress, certificates,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, lt, and } from "drizzle-orm";
@@ -19,12 +21,26 @@ export interface IStorage {
   getTrainingUserByReferenceCode(code: string): Promise<TrainingUser | undefined>;
   getExpiredUsers(): Promise<TrainingUser[]>;
 
+  createTrainingSubject(subject: InsertTrainingSubject): Promise<TrainingSubject>;
+  getTrainingSubject(id: number): Promise<TrainingSubject | undefined>;
+  getAllTrainingSubjects(): Promise<TrainingSubject[]>;
+  updateTrainingSubject(id: number, data: Partial<InsertTrainingSubject>): Promise<TrainingSubject | undefined>;
+  deleteTrainingSubject(id: number): Promise<void>;
+  getTrainingSubjectCount(): Promise<number>;
+
   createTrainingSection(section: InsertTrainingSection): Promise<TrainingSection>;
   getTrainingSection(id: number): Promise<TrainingSection | undefined>;
   getAllTrainingSections(): Promise<TrainingSection[]>;
+  getTrainingSectionsBySubject(subjectId: number): Promise<TrainingSection[]>;
   updateTrainingSection(id: number, section: Partial<InsertTrainingSection>): Promise<TrainingSection | undefined>;
   deleteTrainingSection(id: number): Promise<void>;
   getTrainingSectionCount(): Promise<number>;
+
+  createSectionQuestion(question: InsertSectionQuestion): Promise<SectionQuestion>;
+  getSectionQuestions(sectionId: number): Promise<SectionQuestion[]>;
+  updateSectionQuestion(id: number, data: Partial<InsertSectionQuestion>): Promise<SectionQuestion | undefined>;
+  deleteSectionQuestion(id: number): Promise<void>;
+  deleteSectionQuestionsBySection(sectionId: number): Promise<void>;
 
   getUserProgress(userId: number): Promise<UserProgress[]>;
   getProgressByUserAndSection(userId: number, sectionId: number): Promise<UserProgress | undefined>;
@@ -94,6 +110,34 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
+  async createTrainingSubject(subject: InsertTrainingSubject): Promise<TrainingSubject> {
+    const [result] = await db.insert(trainingSubjects).values(subject).returning();
+    return result;
+  }
+
+  async getTrainingSubject(id: number): Promise<TrainingSubject | undefined> {
+    const [result] = await db.select().from(trainingSubjects).where(eq(trainingSubjects.id, id));
+    return result;
+  }
+
+  async getAllTrainingSubjects(): Promise<TrainingSubject[]> {
+    return db.select().from(trainingSubjects).orderBy(asc(trainingSubjects.orderIndex));
+  }
+
+  async updateTrainingSubject(id: number, data: Partial<InsertTrainingSubject>): Promise<TrainingSubject | undefined> {
+    const [result] = await db.update(trainingSubjects).set(data).where(eq(trainingSubjects.id, id)).returning();
+    return result;
+  }
+
+  async deleteTrainingSubject(id: number): Promise<void> {
+    await db.delete(trainingSubjects).where(eq(trainingSubjects.id, id));
+  }
+
+  async getTrainingSubjectCount(): Promise<number> {
+    const results = await db.select().from(trainingSubjects);
+    return results.length;
+  }
+
   async createTrainingSection(section: InsertTrainingSection): Promise<TrainingSection> {
     const [result] = await db.insert(trainingSections).values(section).returning();
     return result;
@@ -108,6 +152,12 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(trainingSections).orderBy(asc(trainingSections.orderIndex));
   }
 
+  async getTrainingSectionsBySubject(subjectId: number): Promise<TrainingSection[]> {
+    return db.select().from(trainingSections)
+      .where(eq(trainingSections.subjectId, subjectId))
+      .orderBy(asc(trainingSections.orderIndex));
+  }
+
   async updateTrainingSection(id: number, section: Partial<InsertTrainingSection>): Promise<TrainingSection | undefined> {
     const [result] = await db.update(trainingSections)
       .set({ ...section, updatedAt: new Date() })
@@ -117,12 +167,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTrainingSection(id: number): Promise<void> {
+    await db.delete(sectionQuestions).where(eq(sectionQuestions.sectionId, id));
     await db.delete(trainingSections).where(eq(trainingSections.id, id));
   }
 
   async getTrainingSectionCount(): Promise<number> {
     const results = await db.select().from(trainingSections);
     return results.length;
+  }
+
+  async createSectionQuestion(question: InsertSectionQuestion): Promise<SectionQuestion> {
+    const [result] = await db.insert(sectionQuestions).values(question).returning();
+    return result;
+  }
+
+  async getSectionQuestions(sectionId: number): Promise<SectionQuestion[]> {
+    return db.select().from(sectionQuestions)
+      .where(eq(sectionQuestions.sectionId, sectionId))
+      .orderBy(asc(sectionQuestions.orderIndex));
+  }
+
+  async updateSectionQuestion(id: number, data: Partial<InsertSectionQuestion>): Promise<SectionQuestion | undefined> {
+    const [result] = await db.update(sectionQuestions).set(data).where(eq(sectionQuestions.id, id)).returning();
+    return result;
+  }
+
+  async deleteSectionQuestion(id: number): Promise<void> {
+    await db.delete(sectionQuestions).where(eq(sectionQuestions.id, id));
+  }
+
+  async deleteSectionQuestionsBySection(sectionId: number): Promise<void> {
+    await db.delete(sectionQuestions).where(eq(sectionQuestions.sectionId, sectionId));
   }
 
   async getUserProgress(userId: number): Promise<UserProgress[]> {

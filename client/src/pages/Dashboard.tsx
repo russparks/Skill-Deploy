@@ -1,21 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link, useLocation } from "wouter";
-import type { TrainingUser, TrainingSection, UserProgress } from "@shared/schema";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { TrainingUser, TrainingSection, TrainingSubject, UserProgress } from "@shared/schema";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DeleteCountdown } from "@/components/DeleteCountdown";
-import { ProgressTracker } from "@/components/ProgressTracker";
 import { SectionCard } from "@/components/SectionCard";
-import { Shield, Award, BookOpen, CheckCircle } from "lucide-react";
-import { useEffect } from "react";
+import { Zap, Award, CheckCircle, Database, ShieldCheck, BookOpen } from "lucide-react";
+import { useEffect, useState } from "react";
+
+const subjectIcons: Record<string, typeof Database> = {
+  database: Database,
+  "shield-check": ShieldCheck,
+  book: BookOpen,
+};
 
 export default function Dashboard() {
   const { userId } = useParams<{ userId: string }>();
   const [, setLocation] = useLocation();
+  const [expandedSubject, setExpandedSubject] = useState<number | null>(null);
 
   const { data: user, isLoading: userLoading } = useQuery<TrainingUser>({
     queryKey: ["/api/users", userId],
+  });
+
+  const { data: subjects } = useQuery<TrainingSubject[]>({
+    queryKey: ["/api/subjects"],
   });
 
   const { data: sections, isLoading: sectionsLoading } = useQuery<TrainingSection[]>({
@@ -26,7 +35,7 @@ export default function Dashboard() {
     queryKey: ["/api/progress", userId],
   });
 
-  const { data: deletionStatus } = useQuery<{ daysRemaining: number; scheduledDeletionAt: string }>({
+  const { data: deletionStatus } = useQuery<{ hoursRemaining: number; scheduledDeletionAt: string }>({
     queryKey: ["/api/users", userId, "deletion-status"],
   });
 
@@ -64,12 +73,23 @@ export default function Dashboard() {
   const completedCount = completedIds.size;
   const totalCount = sections?.length || 0;
 
+  const getSectionsForSubject = (subjectId: number) =>
+    sections?.filter((s) => s.subjectId === subjectId) || [];
+
+  const getSubjectProgress = (subjectId: number) => {
+    const subjectSections = getSectionsForSubject(subjectId);
+    const completed = subjectSections.filter((s) => completedIds.has(s.id)).length;
+    return { completed, total: subjectSections.length };
+  };
+
+  const ungroupedSections = sections?.filter((s) => !s.subjectId) || [];
+
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2" data-testid="text-welcome">
-            <Shield className="h-6 w-6 text-primary" />
+            <Zap className="h-6 w-6 text-primary" />
             Welcome, {user.name}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -87,30 +107,101 @@ export default function Dashboard() {
       </div>
 
       {deletionStatus && (
-        <DeleteCountdown
-          daysRemaining={deletionStatus.daysRemaining}
-          scheduledDeletionAt={deletionStatus.scheduledDeletionAt}
-        />
+        <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            Your data will be deleted in <strong>{deletionStatus.hoursRemaining} hours</strong>. Complete all modules before then.
+          </p>
+        </div>
       )}
 
-      <ProgressTracker completed={completedCount} total={totalCount} />
-
-      <div>
-        <h2 className="text-lg font-medium mb-3 flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-muted-foreground" />
-          Training Modules
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sections?.map((section) => (
-            <SectionCard
-              key={section.id}
-              section={section}
-              completed={completedIds.has(section.id)}
-              userId={parseInt(userId!)}
-            />
-          ))}
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all"
+            style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
+          />
         </div>
+        <span data-testid="text-overall-progress">{completedCount}/{totalCount} modules complete</span>
       </div>
+
+      {subjects && subjects.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {subjects.map((subject) => {
+            const Icon = subjectIcons[subject.icon] || BookOpen;
+            const prog = getSubjectProgress(subject.id);
+            const isExpanded = expandedSubject === subject.id;
+            const isSubjectComplete = prog.completed === prog.total && prog.total > 0;
+
+            return (
+              <div key={subject.id} className={isExpanded ? "md:col-span-2" : ""}>
+                <Card
+                  className={`cursor-pointer transition-all hover:shadow-md ${isSubjectComplete ? "border-green-300 dark:border-green-700" : ""}`}
+                  data-testid={`card-subject-${subject.id}`}
+                  onClick={() => setExpandedSubject(isExpanded ? null : subject.id)}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-4">
+                      <div className={`h-12 w-12 rounded-lg flex items-center justify-center shrink-0 ${isSubjectComplete ? "bg-green-100 dark:bg-green-900/30" : "bg-primary/10"}`}>
+                        {isSubjectComplete ? (
+                          <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        ) : (
+                          <Icon className="h-6 w-6 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold" data-testid={`text-subject-title-${subject.id}`}>
+                          {subject.title}
+                        </h3>
+                        {subject.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{subject.description}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${isSubjectComplete ? "bg-green-500" : "bg-primary"}`}
+                              style={{ width: `${prog.total > 0 ? (prog.completed / prog.total) * 100 : 0}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground">{prog.completed}/{prog.total}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {isExpanded && (
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {getSectionsForSubject(subject.id).map((section) => (
+                      <SectionCard
+                        key={section.id}
+                        section={section}
+                        completed={completedIds.has(section.id)}
+                        userId={parseInt(userId!)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {ungroupedSections.length > 0 && (
+        <div>
+          <h2 className="text-lg font-medium mb-3">Other Modules</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ungroupedSections.map((section) => (
+              <SectionCard
+                key={section.id}
+                section={section}
+                completed={completedIds.has(section.id)}
+                userId={parseInt(userId!)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {completedCount === totalCount && totalCount > 0 && (
         <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
