@@ -15,6 +15,8 @@ export interface IStorage {
   getAllTrainingUsers(): Promise<TrainingUser[]>;
   deleteTrainingUser(id: number): Promise<void>;
   reactivateTrainingUser(id: number, data: { name: string; organization: string | null; scheduledDeletionAt: Date }): Promise<TrainingUser>;
+  updateTrainingUser(id: number, data: Partial<TrainingUser>): Promise<TrainingUser | undefined>;
+  getTrainingUserByReferenceCode(code: string): Promise<TrainingUser | undefined>;
   getExpiredUsers(): Promise<TrainingUser[]>;
 
   createTrainingSection(section: InsertTrainingSection): Promise<TrainingSection>;
@@ -67,7 +69,19 @@ export class DatabaseStorage implements IStorage {
       organization: data.organization,
       scheduledDeletionAt: data.scheduledDeletionAt,
       isDeleted: false,
+      referenceCode: null,
+      completedAt: null,
     }).where(eq(trainingUsers.id, id)).returning();
+    return result;
+  }
+
+  async updateTrainingUser(id: number, data: Partial<TrainingUser>): Promise<TrainingUser | undefined> {
+    const [result] = await db.update(trainingUsers).set(data).where(eq(trainingUsers.id, id)).returning();
+    return result;
+  }
+
+  async getTrainingUserByReferenceCode(code: string): Promise<TrainingUser | undefined> {
+    const [result] = await db.select().from(trainingUsers).where(eq(trainingUsers.referenceCode, code));
     return result;
   }
 

@@ -67,3 +67,41 @@ export async function sendCertificateEmail(
     return false;
   }
 }
+
+export async function sendCompletionEmail(
+  to: string,
+  userName: string,
+  referenceCode: string,
+  returnUrl: string
+): Promise<boolean> {
+  const transport = getTransporter();
+
+  if (!transport) {
+    log(`[Email Fallback] Would send completion email to ${to} with ref ${referenceCode} - No email service configured`, "email");
+    return false;
+  }
+
+  try {
+    await transport.sendMail({
+      from: process.env.SMTP_FROM || "training@example.com",
+      to,
+      subject: `Training Complete - Your Reference Code: ${referenceCode}`,
+      html: `
+        <h2>Congratulations, ${userName}!</h2>
+        <p>You have successfully completed all training modules.</p>
+        <p>Your unique reference code is: <strong style="font-size: 1.4em; letter-spacing: 2px;">${referenceCode}</strong></p>
+        <p>Please save this code for your records. You can use it to verify your training completion.</p>
+        <br/>
+        <p>If you need to retake the training in the future, you can return here:</p>
+        <p><a href="${returnUrl}">${returnUrl}</a></p>
+        <br/>
+        <p><em>Privacy-Focused Training Platform</em></p>
+      `,
+    });
+    log(`Completion email sent to ${to} with ref ${referenceCode}`, "email");
+    return true;
+  } catch (error) {
+    log(`Failed to send completion email to ${to}: ${error}`, "email");
+    return false;
+  }
+}

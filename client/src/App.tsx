@@ -8,6 +8,7 @@ import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import TrainingViewer from "@/pages/TrainingViewer";
 import CertificatesPage from "@/pages/CertificatesPage";
+import CompletionPage from "@/pages/CompletionPage";
 import AdminPanel from "@/pages/AdminPanel";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/dashboard/:userId" component={Dashboard} />
       <Route path="/training/:userId/:sectionId" component={TrainingViewer} />
       <Route path="/certificates/:userId" component={CertificatesPage} />
+      <Route path="/complete/:userId" component={CompletionPage} />
       <Route path="/admin" component={AdminPanel} />
       <Route component={NotFound} />
     </Switch>

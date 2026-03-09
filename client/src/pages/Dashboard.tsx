@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import type { TrainingUser, TrainingSection, UserProgress } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DeleteCountdown } from "@/components/DeleteCountdown";
 import { ProgressTracker } from "@/components/ProgressTracker";
 import { SectionCard } from "@/components/SectionCard";
-import { Shield, Award, BookOpen } from "lucide-react";
+import { Shield, Award, BookOpen, CheckCircle } from "lucide-react";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   const { userId } = useParams<{ userId: string }>();
+  const [, setLocation] = useLocation();
 
   const { data: user, isLoading: userLoading } = useQuery<TrainingUser>({
     queryKey: ["/api/users", userId],
@@ -27,6 +29,12 @@ export default function Dashboard() {
   const { data: deletionStatus } = useQuery<{ daysRemaining: number; scheduledDeletionAt: string }>({
     queryKey: ["/api/users", userId, "deletion-status"],
   });
+
+  useEffect(() => {
+    if (user?.referenceCode) {
+      setLocation(`/complete/${userId}`);
+    }
+  }, [user, userId, setLocation]);
 
   const isLoading = userLoading || sectionsLoading || progressLoading;
 
@@ -103,6 +111,26 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {completedCount === totalCount && totalCount > 0 && (
+        <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
+          <CardContent className="p-6 text-center">
+            <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold mb-2" data-testid="text-all-complete">
+              All Modules Complete!
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              You've completed all training sections. Finish to receive your unique reference code.
+            </p>
+            <Link href={`/complete/${userId}`}>
+              <Button size="lg" data-testid="button-finish-training">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Finish & Get Reference Code
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

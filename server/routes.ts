@@ -2,9 +2,20 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import crypto from "crypto";
 import { generateCertificatePDF } from "./services/certificateGenerator";
 import { sendCertificateEmail } from "./services/emailService";
+import { sendCompletionEmail } from "./services/emailService";
 import { runCleanup } from "./services/dataCleanup";
+
+function generateReferenceCode(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const part = (len: number) =>
+    Array.from(crypto.randomBytes(len))
+      .map((b) => chars[b % chars.length])
+      .join("");
+  return `${part(3)}-${part(3)}-${part(1)}`;
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -245,6 +256,63 @@ export async function registerRoutes(
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
+  });
+
+  app.post("/api/users/:id/complete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid user ID" });
+
+      const user = await storage.getTrainingUser(id);
+      if (!user || user.isDeleted) return res.status(404).json({ message: "User not found" });
+
+      if (user.referenceCode) {
+        return res.json({ referenceCode: user.referenceCode, alreadyCompleted: true });
+      }
+
+      const sections = await storage.getAllTrainingSections();
+      const progress = await storage.getUserProgress(id);
+      const completedIds = new Set(progress.filter((p) => p.completedAt).map((p) => p.sectionId));
+      const allComplete = sections.length > 0 && sections.every((s) => completedIds.has(s.id));
+
+      if (!allComplete) {
+        return res.status(400).json({ message: "Not all sections completed" });
+      }
+
+      let referenceCode = generateReferenceCode();
+      let codeExists = await storage.getTrainingUserByReferenceCode(referenceCode);
+      let attempts = 0;
+      while (codeExists && attempts < 50) {
+        referenceCode = generateReferenceCode();
+        codeExists = await storage.getTrainingUserByReferenceCode(referenceCode);
+        attempts++;
+      }
+      if (codeExists) {
+        return res.status(500).json({ message: "Unable to generate unique reference code. Please try again." });
+      }
+
+      const updated = await storage.updateTrainingUser(id, {
+        referenceCode,
+        completedAt: new Date(),
+      });
+
+      try {
+        const baseUrl = `${req.protocol}://${req.get("host")}`;
+        await sendCompletionEmail(user.email, user.name, referenceCode, baseUrl);
+      } catch (emailErr) {
+        // Non-blocking: log but don't fail completion
+      }
+
+      res.json({ referenceCode: updated?.referenceCode, completedAt: updated?.completedAt });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/users/reference/:code", async (req, res) => {
+    const user = await storage.getTrainingUserByReferenceCode(req.params.code.toLowerCase());
+    if (!user) return res.status(404).json({ message: "Reference code not found" });
+    res.json({ exists: true, name: user.name });
   });
 
   app.delete("/api/users/:id/data", async (req, res) => {

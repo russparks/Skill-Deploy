@@ -8,6 +8,8 @@ export const trainingUsers = pgTable("training_users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   organization: text("organization"),
+  referenceCode: text("reference_code").unique(),
+  completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   scheduledDeletionAt: timestamp("scheduled_deletion_at").notNull(),
   isDeleted: boolean("is_deleted").default(false),
@@ -48,6 +50,8 @@ export const insertTrainingUserSchema = createInsertSchema(trainingUsers).omit({
   id: true,
   createdAt: true,
   isDeleted: true,
+  referenceCode: true,
+  completedAt: true,
 });
 
 export const insertTrainingSectionSchema = createInsertSchema(trainingSections).omit({

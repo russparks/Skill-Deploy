@@ -38,16 +38,24 @@ A responsive training platform that collects temporary user data (email, company
 - `/dashboard/:userId` - Training dashboard with progress
 - `/training/:userId/:sectionId` - Training content viewer
 - `/certificates/:userId` - View earned certificates
+- `/complete/:userId` - Completion page with unique reference code (xxx-xxx-x format)
 - `/admin` - Admin panel (section CRUD, user management, cleanup)
 
 ## API Endpoints
 - `POST /api/users/register` - Register/reactivate user
 - `GET /api/users/:id` - Get user info
+- `POST /api/users/:id/complete` - Generate reference code on completion of all sections
+- `GET /api/users/reference/:code` - Look up a reference code
 - `GET /api/sections` - List training sections
 - `POST /api/progress/complete` - Mark section complete
 - `POST /api/progress/generate-certificate` - Generate PDF certificate
 - `DELETE /api/users/:id/data` - Delete user data
 - `POST /api/cleanup/run` - Manual cleanup trigger
+
+## Email
+- Email is configured via SMTP environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)
+- Currently falls back to console logging when no SMTP is configured
+- Resend integration was dismissed; user can set up SMTP credentials later
 
 ## Services
 - `server/services/certificateGenerator.ts` - PDF certificate generation
