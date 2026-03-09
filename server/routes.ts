@@ -34,14 +34,28 @@ export async function registerRoutes(
       const trimmedEmail = data.email;
       const existing = await storage.getTrainingUserByEmail(trimmedEmail);
 
-      if (existing && !existing.isDeleted) {
-        return res.json(existing);
-      }
-
       const scheduledDeletionAt = new Date();
       scheduledDeletionAt.setDate(scheduledDeletionAt.getDate() + 30);
 
+      if (existing && !existing.isDeleted) {
+        if (existing.referenceCode) {
+          await storage.deleteCertificatesByUser(existing.id);
+          await storage.deleteUserProgressByUser(existing.id);
+          const reset = await storage.updateTrainingUser(existing.id, {
+            name: data.name,
+            organization: data.organization || null,
+            referenceCode: null,
+            completedAt: null,
+            scheduledDeletionAt,
+          });
+          return res.json(reset);
+        }
+        return res.json(existing);
+      }
+
       if (existing && existing.isDeleted) {
+        await storage.deleteCertificatesByUser(existing.id);
+        await storage.deleteUserProgressByUser(existing.id);
         const reactivated = await storage.reactivateTrainingUser(existing.id, {
           name: data.name,
           organization: data.organization || null,
