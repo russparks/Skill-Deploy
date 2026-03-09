@@ -60,7 +60,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  const { initializeApp } = await import("./init");
   await registerRoutes(httpServer, app);
+  await initializeApp();
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
