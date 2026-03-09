@@ -14,6 +14,7 @@ export interface IStorage {
   getTrainingUserByEmail(email: string): Promise<TrainingUser | undefined>;
   getAllTrainingUsers(): Promise<TrainingUser[]>;
   deleteTrainingUser(id: number): Promise<void>;
+  reactivateTrainingUser(id: number, data: { name: string; organization: string | null; scheduledDeletionAt: Date }): Promise<TrainingUser>;
   getExpiredUsers(): Promise<TrainingUser[]>;
 
   createTrainingSection(section: InsertTrainingSection): Promise<TrainingSection>;
@@ -58,6 +59,16 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTrainingUser(id: number): Promise<void> {
     await db.update(trainingUsers).set({ isDeleted: true }).where(eq(trainingUsers.id, id));
+  }
+
+  async reactivateTrainingUser(id: number, data: { name: string; organization: string | null; scheduledDeletionAt: Date }): Promise<TrainingUser> {
+    const [result] = await db.update(trainingUsers).set({
+      name: data.name,
+      organization: data.organization,
+      scheduledDeletionAt: data.scheduledDeletionAt,
+      isDeleted: false,
+    }).where(eq(trainingUsers.id, id)).returning();
+    return result;
   }
 
   async getExpiredUsers(): Promise<TrainingUser[]> {

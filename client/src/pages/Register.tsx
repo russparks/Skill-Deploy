@@ -66,7 +66,7 @@ export default function Register() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
+              <form noValidate onSubmit={form.handleSubmit((data) => mutation.mutate({ ...data, email: data.email.trim() }))} className="space-y-4">
                 <FormField
                   control={form.control}
                   name="name"

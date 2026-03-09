@@ -15,12 +15,14 @@ export async function registerRoutes(
     try {
       const schema = z.object({
         name: z.string().min(1),
-        email: z.string().email(),
+        email: z.string().trim().toLowerCase().email(),
         organization: z.string().optional().nullable(),
       });
       const data = schema.parse(req.body);
 
-      const existing = await storage.getTrainingUserByEmail(data.email);
+      const trimmedEmail = data.email;
+      const existing = await storage.getTrainingUserByEmail(trimmedEmail);
+
       if (existing && !existing.isDeleted) {
         return res.json(existing);
       }
@@ -28,9 +30,18 @@ export async function registerRoutes(
       const scheduledDeletionAt = new Date();
       scheduledDeletionAt.setDate(scheduledDeletionAt.getDate() + 30);
 
+      if (existing && existing.isDeleted) {
+        const reactivated = await storage.reactivateTrainingUser(existing.id, {
+          name: data.name,
+          organization: data.organization || null,
+          scheduledDeletionAt,
+        });
+        return res.json(reactivated);
+      }
+
       const user = await storage.createTrainingUser({
         name: data.name,
-        email: data.email,
+        email: trimmedEmail,
         organization: data.organization || null,
         scheduledDeletionAt,
       });
