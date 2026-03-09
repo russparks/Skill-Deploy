@@ -53,12 +53,14 @@ A responsive training platform that collects temporary user data (email, company
 - `POST /api/cleanup/run` - Manual cleanup trigger
 
 ## Email
-- Email is configured via SMTP environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)
-- Currently falls back to console logging when no SMTP is configured
-- Resend integration was dismissed; user can set up SMTP credentials later
+- Email is powered by Resend (resend.com) via the `resend` npm package
+- API key stored in `RESEND_API_KEY` secret
+- Default sender: `onboarding@resend.dev` (override with `EMAIL_FROM` env var after verifying a custom domain)
+- Free tier restriction: can only send to the Resend account owner's email until a custom domain is verified at resend.com/domains
+- Falls back to console logging when `RESEND_API_KEY` is not set
 
 ## Services
 - `server/services/certificateGenerator.ts` - PDF certificate generation
-- `server/services/emailService.ts` - Email delivery with Nodemailer
+- `server/services/emailService.ts` - Email delivery with Resend
 - `server/services/dataCleanup.ts` - Scheduled data cleanup (daily at midnight)
 - `server/init.ts` - Seeds 5 sample training sections on first run
