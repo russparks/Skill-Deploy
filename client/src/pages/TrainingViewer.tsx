@@ -8,11 +8,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, CheckCircle, Clock, RotateCcw } from "lucide-react";
+import { useState } from "react";
 
 export default function TrainingViewer() {
   const { userId, sectionId } = useParams<{ userId: string; sectionId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [justCompletedSectionId, setJustCompletedSectionId] = useState<number | null>(null);
 
   const { data: section, isLoading: sectionLoading } = useQuery<TrainingSection>({
     queryKey: ["/api/sections", sectionId],
@@ -35,6 +37,7 @@ export default function TrainingViewer() {
       return res.json();
     },
     onSuccess: () => {
+      setJustCompletedSectionId(parseInt(sectionId!));
       queryClient.invalidateQueries({ queryKey: ["/api/progress", userId] });
       toast({ title: "Section completed!", description: "Great job!" });
     },
@@ -138,7 +141,7 @@ export default function TrainingViewer() {
           <div />
         )}
 
-        {!isCompleted && !completeMutation.isSuccess ? (
+        {!isCompleted && justCompletedSectionId !== section.id ? (
           <Button
             data-testid="button-complete"
             onClick={() => completeMutation.mutate()}
