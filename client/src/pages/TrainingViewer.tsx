@@ -69,7 +69,17 @@ export default function TrainingViewer() {
     onSuccess: () => {
       setJustCompletedSectionId(parseInt(sectionId!));
       queryClient.invalidateQueries({ queryKey: ["/api/progress", userId] });
-      toast({ title: "Section completed!", description: "Great job!" });
+
+      const currentSection = sections?.find((s) => s.id === parseInt(sectionId!));
+      if (currentSection?.subjectId && sections && progress) {
+        const subjectSections = sections.filter((s) => s.subjectId === currentSection.subjectId);
+        const alreadyCompleted = new Set(progress.filter((p) => p.completedAt).map((p) => p.sectionId));
+        alreadyCompleted.add(parseInt(sectionId!));
+        const allDone = subjectSections.every((s) => alreadyCompleted.has(s.id));
+        if (allDone) {
+          toast({ title: "Subject complete!", description: "You've finished all modules in this subject." });
+        }
+      }
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -97,7 +107,6 @@ export default function TrainingViewer() {
   const totalSections = sections?.length ?? 1;
   const progressPercent = ((currentIndex + 1) / totalSections) * 100;
   const prevSection = sections && currentIndex > 0 ? sections[currentIndex - 1] : null;
-  const nextSection = sections && currentIndex < totalSections - 1 ? sections[currentIndex + 1] : null;
 
   const isCompleted = progress?.some(
     (p) => p.sectionId === section.id && p.completedAt
@@ -359,21 +368,12 @@ export default function TrainingViewer() {
               <RotateCcw className="mr-1 h-4 w-4" />
               Redo Module
             </Button>
-            {nextSection ? (
-              <Link href={`/training/${userId}/${nextSection.id}`}>
-                <Button data-testid="button-next-section">
-                  Next Module
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            ) : (
-              <Link href={`/complete/${userId}`}>
-                <Button data-testid="button-finish-training">
-                  Finish Training
-                  <CheckCircle className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            )}
+            <Link href={`/dashboard/${userId}`}>
+              <Button data-testid="button-back-dashboard">
+                Back to Dashboard
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         )}
       </div>

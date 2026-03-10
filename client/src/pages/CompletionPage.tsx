@@ -140,6 +140,9 @@ export default function CompletionPage() {
               <p className="text-xs text-muted-foreground">
                 Save this code for your records. It serves as proof of your training completion.
               </p>
+              <p className="text-xs text-muted-foreground mt-2" data-testid="text-email-notice">
+                Your unique reference number and certificate links have been sent via email to <strong>{user.email}</strong> and the GMI team.
+              </p>
             </div>
           ) : completionMutation.isError ? (
             <p className="text-center text-destructive" data-testid="text-completion-error">
