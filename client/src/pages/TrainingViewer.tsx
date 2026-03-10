@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, CheckCircle, Clock, RotateCcw, AlertTriangle } from "lucide-react";
+import { ChevronLeft, CheckCircle, Clock, RotateCcw, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 function convertToEmbedUrl(url: string): string {
@@ -25,7 +25,6 @@ export default function TrainingViewer() {
   const { userId, sectionId } = useParams<{ userId: string; sectionId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [justCompletedSectionId, setJustCompletedSectionId] = useState<number | null>(null);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, boolean | null>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizPassed, setQuizPassed] = useState(false);
@@ -67,18 +66,30 @@ export default function TrainingViewer() {
       return res.json();
     },
     onSuccess: () => {
-      setJustCompletedSectionId(parseInt(sectionId!));
       queryClient.invalidateQueries({ queryKey: ["/api/progress", userId] });
 
       const currentSection = sections?.find((s) => s.id === parseInt(sectionId!));
       if (currentSection?.subjectId && sections && progress) {
-        const subjectSections = sections.filter((s) => s.subjectId === currentSection.subjectId);
-        const alreadyCompleted = new Set(progress.filter((p) => p.completedAt).map((p) => p.sectionId));
-        alreadyCompleted.add(parseInt(sectionId!));
-        const allDone = subjectSections.every((s) => alreadyCompleted.has(s.id));
-        if (allDone) {
-          toast({ title: "Subject complete!", description: "You've finished all modules in this subject." });
+        const subjectSections = sections
+          .filter((s) => s.subjectId === currentSection.subjectId)
+          .sort((a, b) => a.orderIndex - b.orderIndex);
+
+        const currentIdx = subjectSections.findIndex((s) => s.id === currentSection.id);
+        const nextInModule = subjectSections[currentIdx + 1];
+
+        if (nextInModule) {
+          setLocation(`/training/${userId}/${nextInModule.id}`);
+        } else {
+          const alreadyCompleted = new Set(progress.filter((p) => p.completedAt).map((p) => p.sectionId));
+          alreadyCompleted.add(parseInt(sectionId!));
+          const allDone = subjectSections.every((s) => alreadyCompleted.has(s.id));
+          if (allDone) {
+            toast({ title: "Module complete!", description: "You've finished all sections in this module." });
+          }
+          setLocation(`/dashboard/${userId}`);
         }
+      } else {
+        setLocation(`/dashboard/${userId}`);
       }
     },
     onError: (error: Error) => {
@@ -130,7 +141,6 @@ export default function TrainingViewer() {
 
     if (correctCount === questions.length) {
       setQuizPassed(true);
-      toast({ title: "All correct!", description: "You can now mark this module as complete." });
     } else if (allWrong) {
       toast({
         title: "Both answers incorrect",
@@ -226,7 +236,7 @@ export default function TrainingViewer() {
         </CardContent>
       </Card>
 
-      {hasQuestions && !isCompleted && justCompletedSectionId !== section.id && (
+      {hasQuestions && !isCompleted && (
         <Card>
           <CardContent className="p-6 space-y-4">
             <h3 className="font-semibold text-lg">Knowledge Check</h3>
@@ -341,7 +351,7 @@ export default function TrainingViewer() {
           <div />
         )}
 
-        {!isCompleted && justCompletedSectionId !== section.id ? (
+        {!isCompleted ? (
           canMarkComplete ? (
             <Button
               data-testid="button-complete"
@@ -360,18 +370,16 @@ export default function TrainingViewer() {
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
-              data-testid="button-redo-module"
-              onClick={() => {
-                window.scrollTo(0, 0);
-              }}
+              data-testid="button-redo-section"
+              onClick={() => window.scrollTo(0, 0)}
             >
               <RotateCcw className="mr-1 h-4 w-4" />
-              Redo Module
+              Redo Section
             </Button>
             <Link href={`/dashboard/${userId}`}>
-              <Button data-testid="button-back-dashboard">
-                Back to Dashboard
-                <ChevronRight className="ml-1 h-4 w-4" />
+              <Button variant="ghost" data-testid="button-back-dashboard">
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Dashboard
               </Button>
             </Link>
           </div>
