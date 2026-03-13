@@ -74,21 +74,77 @@ export async function sendCompletionEmail(
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: `Training Complete - Your Unique Code`,
+      subject: `Training Complete - Your Unique Reference Code`,
       html: `
-        <h2>Congratulations, ${userName}!</h2>
-        <p>You have successfully completed all training modules.</p>
-        <p>Your unique reference code is: <strong style="font-size: 1.4em; letter-spacing: 2px;">${referenceCode}</strong></p>
-        <p>Please save this code for your records. You can use it to verify your training completion.</p>
-        <br/>
-        <h3>Useful Links</h3>
-        <ul>
-          <li><strong>Download Training Material:</strong> <a href="${returnUrl}/api/training-material/download">Download Training PDF</a></li>
-          <li><strong>Download Certificates:</strong> <a href="${returnUrl}/api/certificates/download-all/${userId}">Download All Certificates</a></li>
-          <li><strong>Share Training:</strong> Copy this link to share the training with others: <a href="${returnUrl}">${returnUrl}</a></li>
-        </ul>
-        <br/>
-        <p><em>Quick Skill - Onboarding The Works</em></p>
+<div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;margin:0;padding:20px 40px 40px 40px">
+
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;padding:30px;box-shadow:0 4px 10px rgba(0,0,0,0.08)">
+
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:60px;height:70px;background:#e5e7eb;border-radius:6px;margin:0 auto"></div>
+    </div>
+
+    <div style="font-size:22px;font-weight:bold;margin-bottom:10px;text-align:center">
+      Congratulations, ${userName}!
+    </div>
+
+    <div style="color:#666;margin-bottom:20px;text-align:center">
+      You have successfully completed all training modules.
+    </div>
+
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:25px 0">
+
+    <div style="text-align:center;background:#f8fafc;padding:18px;border-radius:8px;max-width:420px;margin:0 auto">
+      <div style="font-size:40px;font-weight:bold;font-family:Courier New,monospace;background:#f1f3f5;padding:14px 18px;border-radius:6px;display:inline-block;margin:10px 0;border:1px dashed #cbd5e1;letter-spacing:3px">
+        ${referenceCode}
+      </div>
+
+      <div style="font-size:12px;color:#777;margin-top:6px;letter-spacing:0.5px">
+        Unique Reference Code
+      </div>
+
+      <div style="font-size:11px;color:#999;margin-top:6px">
+        Tip: select or tap and hold to copy
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:25px 0">
+
+    <div style="text-align:center;max-width:420px;margin:0 auto">
+      Please save this code for your records, you will be asked for it by the Information Management team. Your certificates and the training material can be downloaded below.
+    </div>
+
+    <div style="margin-top:30px">
+
+      <a href="${returnUrl}/api/training-material/download"
+        style="display:block;margin:10px auto;color:#1e3a8a;text-decoration:none;max-width:420px;text-align:center;font-size:140%;padding:16px 18px;border-radius:6px;font-weight:bold;background:#edf2ff">
+        ⬇ Training Material<br/>
+        <span style="font-weight:normal;font-size:12px;color:#555">always available</span>
+      </a>
+
+      <a href="${returnUrl}/api/certificates/download-all/${userId}"
+        style="display:block;margin:10px auto;color:#1e3a8a;text-decoration:none;max-width:420px;text-align:center;font-size:140%;padding:16px 18px;border-radius:6px;font-weight:bold;background:#e6fffa">
+        ⬇ Certificates<br/>
+        <span style="font-weight:normal;font-size:12px;color:#555">link expires in 30min</span>
+      </a>
+
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:18px 0">
+
+      <a href="${returnUrl}"
+        style="display:block;margin:10px auto;color:#1e3a8a;text-decoration:none;max-width:420px;text-align:center;font-size:140%;padding:16px 18px;border-radius:6px;font-weight:bold;background:#f0fff4">
+        ⇪ Share Training<br/>
+        <span style="font-weight:normal;font-size:12px;color:#555">for others that need training</span>
+      </a>
+
+    </div>
+
+  </div>
+
+  <div style="text-align:center;color:#777;font-size:12px;padding-bottom:30px;margin-top:30px">
+    Quick Skill - Onboarding The Works
+  </div>
+
+</div>
       `,
     });
 
