@@ -8,9 +8,9 @@ interface PrivacyNoticeProps {
 export function PrivacyNotice({ checked, onCheckedChange }: PrivacyNoticeProps) {
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-        <p className="text-xs text-gray-500 leading-relaxed">
-          Your data is stored only to deliver this training and will be <strong className="text-gray-700">automatically deleted after 24 hours</strong>. Complete all modules in one session. You may request early deletion at any time.
+      <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+        <p className="text-xs text-rose-700 leading-relaxed">
+          Your data is stored only to deliver this training and will be <strong>automatically deleted after 24 hours</strong>. Complete all modules in one session. You may request early deletion at any time.
         </p>
       </div>
       <div className="flex items-start gap-3">

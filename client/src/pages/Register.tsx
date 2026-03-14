@@ -126,9 +126,15 @@ export default function Register() {
 
       </div>
 
-      <p className="text-center text-gray-400 text-xs mt-6 pb-6">
-        Quick Skill — Onboarding The Works
-      </p>
+      <div className="text-center mt-6 pb-6 space-y-1">
+        <p className="text-gray-400 text-xs">Skill Deploy | Project Onboarding</p>
+        <a
+          href="mailto:info@axislabs.co.uk"
+          className="text-gray-400 text-xs hover:text-gray-600 transition-colors"
+        >
+          support@gmi.onboarding.co.uk
+        </a>
+      </div>
 
     </div>
   );
