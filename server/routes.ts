@@ -515,17 +515,22 @@ export async function registerRoutes(
   });
 
   app.delete("/api/users/:id/data", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid user ID" });
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid user ID" });
 
-    const user = await storage.getTrainingUser(id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+      const user = await storage.getTrainingUser(id);
+      if (!user) return res.status(404).json({ message: "User not found" });
 
-    await storage.deleteCertificatesByUser(id);
-    await storage.deleteUserProgressByUser(id);
-    await storage.deleteTrainingUser(id);
+      await storage.deleteCertificatesByUser(id);
+      await storage.deleteUserProgressByUser(id);
+      await storage.deleteTrainingUser(id);
 
-    res.json({ message: "User data deleted successfully" });
+      res.json({ message: "User data deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting user data:", error);
+      res.status(500).json({ message: error.message || "Failed to delete user data" });
+    }
   });
 
   app.post("/api/cleanup/run", async (_req, res) => {

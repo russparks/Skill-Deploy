@@ -254,6 +254,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "User data deleted" });
     },
+    onError: (e: Error) => toast({ title: "Error deleting user", description: e.message, variant: "destructive" }),
   });
 
   function openCreateSection() {
