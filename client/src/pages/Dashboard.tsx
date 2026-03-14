@@ -5,8 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionCard } from "@/components/SectionCard";
-import { Zap, Award, CheckCircle, Database, ShieldCheck, BookOpen } from "lucide-react";
+import { Award, CheckCircle, Database, ShieldCheck, BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
+import gmiLogoSmall from "@assets/gmi-logo-small_1773449697214.png";
 
 const subjectIcons: Record<string, typeof Database> = {
   database: Database,
@@ -101,10 +102,12 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
+
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2" data-testid="text-welcome">
-            <Zap className="h-6 w-6 text-primary" />
+            <img src={gmiLogoSmall} alt="GMI" className="h-8 w-8 object-contain" />
             Welcome, {user.name}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -121,14 +124,18 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <hr className="border-gray-200" />
+
+      {/* Data warning */}
       {deletionStatus && (
-        <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3">
-          <p className="text-sm text-amber-800 dark:text-amber-200">
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+          <p className="text-xs text-rose-700 leading-relaxed">
             Your data will be deleted in <strong>{deletionStatus.hoursRemaining} hours</strong>. Complete all modules before then.
           </p>
         </div>
       )}
 
+      {/* Overall progress bar */}
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
           <div
@@ -139,6 +146,9 @@ export default function Dashboard() {
         <span data-testid="text-overall-progress">{completedCount}/{totalCount} modules complete</span>
       </div>
 
+      <hr className="border-gray-200" />
+
+      {/* Subject cards */}
       {subjects && subjects.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {subjects.map((subject) => {
@@ -210,8 +220,10 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Ungrouped sections */}
       {ungroupedSections.length > 0 && (
         <div>
+          <hr className="border-gray-200 mb-6" />
           <h2 className="text-lg font-medium mb-3">Other Modules</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {ungroupedSections.map((section) => (
@@ -226,25 +238,30 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* All complete card */}
       {completedCount === totalCount && totalCount > 0 && (
-        <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
-          <CardContent className="p-6 text-center">
-            <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold mb-2" data-testid="text-all-complete">
-              All Modules Complete!
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              You've completed all training sections. Finish to receive your unique reference code.
-            </p>
-            <Link href={`/complete/${userId}`}>
-              <Button size="lg" data-testid="button-finish-training">
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Finish & Get Reference Code
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <div>
+          <hr className="border-gray-200 mb-6" />
+          <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
+            <CardContent className="p-6 text-center">
+              <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold mb-2" data-testid="text-all-complete">
+                All Modules Complete!
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                You've completed all training sections. Finish to receive your unique reference code.
+              </p>
+              <Link href={`/complete/${userId}`}>
+                <Button size="lg" data-testid="button-finish-training">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Finish & Get Reference Code
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       )}
+
     </div>
   );
 }
