@@ -146,8 +146,6 @@ export default function Dashboard() {
         <span data-testid="text-overall-progress">{completedCount}/{totalCount} modules complete</span>
       </div>
 
-      <hr className="border-gray-200" />
-
       {/* Subject cards */}
       {subjects && subjects.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
