@@ -6,7 +6,14 @@ import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { PrivacyNotice } from "@/components/PrivacyNotice";
 import { useState } from "react";
@@ -40,37 +47,60 @@ export default function Register() {
       return res.json();
     },
     onSuccess: (user) => {
-      toast({ title: "Registration successful", description: "Welcome to the training platform!" });
+      toast({
+        title: "Registration successful",
+        description: "Welcome to the training platform!",
+      });
       setLocation(`/dashboard/${user.id}`);
     },
     onError: (error: Error) => {
-      toast({ title: "Registration failed", description: error.message, variant: "destructive" });
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   return (
     <div className="min-h-screen bg-[#f4f6f8] flex flex-col items-center justify-center p-5">
-
       <div className="w-full max-w-[520px] bg-white rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.08)] p-8 space-y-6">
-
         <div className="flex flex-col items-center gap-3 pb-2">
-          <img src={gmiLogo} alt="GMI Construction Group PLC" className="w-52 h-auto object-contain" />
+          <img
+            src={gmiLogo}
+            alt="GMI Construction Group PLC"
+            className="w-52 h-auto object-contain"
+          />
           <hr className="w-full border-[#e5e7eb] mt-1" />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900" data-testid="text-title">Skill Deploy | Project Onboarding</h1>
+            <h1
+              className="text-2xl font-bold text-gray-900"
+              data-testid="text-title"
+            >
+              Skill Deploy | Project Onboarding
+            </h1>
           </div>
         </div>
 
         <hr className="border-[#e5e7eb]" />
 
         <div>
-          <h2 className="text-base font-medium text-gray-600" data-testid="text-form-title">
+          <h2
+            className="text-base font-medium text-gray-600"
+            data-testid="text-form-title"
+          >
             Fill out the form below to get started
           </h2>
         </div>
 
         <Form {...form}>
-          <form noValidate onSubmit={form.handleSubmit((data) => mutation.mutate({ ...data, email: data.email.trim() }))} className="space-y-4">
+          <form
+            noValidate
+            onSubmit={form.handleSubmit((data) =>
+              mutation.mutate({ ...data, email: data.email.trim() }),
+            )}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -78,7 +108,11 @@ export default function Register() {
                 <FormItem>
                   <FormLabel className="text-gray-700">Full Name</FormLabel>
                   <FormControl>
-                    <Input data-testid="input-name" placeholder="Enter your full name" {...field} />
+                    <Input
+                      data-testid="input-name"
+                      placeholder="Enter your full name"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -91,7 +125,12 @@ export default function Register() {
                 <FormItem>
                   <FormLabel className="text-gray-700">Email</FormLabel>
                   <FormControl>
-                    <Input data-testid="input-email" type="email" placeholder="you@example.com" {...field} />
+                    <Input
+                      data-testid="input-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -104,14 +143,21 @@ export default function Register() {
                 <FormItem>
                   <FormLabel className="text-gray-700">Organisation</FormLabel>
                   <FormControl>
-                    <Input data-testid="input-organization" placeholder="Your company or organisation" {...field} />
+                    <Input
+                      data-testid="input-organization"
+                      placeholder="Your company or organisation"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <PrivacyNotice checked={privacyAccepted} onCheckedChange={setPrivacyAccepted} />
+            <PrivacyNotice
+              checked={privacyAccepted}
+              onCheckedChange={setPrivacyAccepted}
+            />
 
             <Button
               data-testid="button-register"
@@ -123,19 +169,19 @@ export default function Register() {
             </Button>
           </form>
         </Form>
-
       </div>
 
       <div className="text-center mt-6 pb-6 space-y-1">
-        <p className="text-gray-400 text-xs">Skill Deploy | Project Onboarding</p>
+        <p className="text-gray-400 text-xs">
+          Skill Deploy | Project Onboarding
+        </p>
         <a
-          href="mailto:info@axislabs.co.uk"
+          href="mailto:info@axislabs.co.uk?subject=Skill%20Deploy"
           className="text-gray-400 text-xs hover:text-gray-600 transition-colors"
         >
           support@gmi.onboarding.co.uk
         </a>
       </div>
-
     </div>
   );
 }

@@ -10,7 +10,7 @@ export function PrivacyNotice({ checked, onCheckedChange }: PrivacyNoticeProps) 
     <div className="space-y-3">
       <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
         <p className="text-xs text-rose-700 leading-relaxed">
-          Your data is stored only to deliver this training and will be <strong>automatically deleted after 24 hours</strong>. Complete all modules in one session. You may request early deletion at any time.
+          Data is used only to deliver this training and deleted after 24 hours. Complete all modules in one session. Early deletion available on request.
         </p>
       </div>
       <div className="flex items-start gap-3">
