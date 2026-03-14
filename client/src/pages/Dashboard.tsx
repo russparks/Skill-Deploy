@@ -146,7 +146,7 @@ export default function Dashboard() {
 
       {/* Subject cards */}
       {subjects && subjects.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-4">
           {subjects.map((subject) => {
             const Icon = subjectIcons[subject.icon] || BookOpen;
             const prog = getSubjectProgress(subject.id);
@@ -154,7 +154,7 @@ export default function Dashboard() {
             const isSubjectComplete = prog.completed === prog.total && prog.total > 0;
 
             return (
-              <div key={subject.id} className={isExpanded ? "md:col-span-2" : ""}>
+              <div key={subject.id}>
                 <Card
                   className={`cursor-pointer transition-all hover:shadow-md ${isSubjectComplete ? "border-green-300 dark:border-green-700" : ""}`}
                   data-testid={`card-subject-${subject.id}`}
