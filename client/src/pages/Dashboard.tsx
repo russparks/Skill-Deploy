@@ -124,8 +124,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <hr className="border-gray-200" />
-
       {/* Data warning */}
       {deletionStatus && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
@@ -202,14 +200,13 @@ export default function Dashboard() {
 
                 {isExpanded && (
                   <div className="mt-3 flex flex-col">
-                    {getSectionsForSubject(subject.id).map((section, idx, arr) => (
+                    {getSectionsForSubject(subject.id).map((section) => (
                       <div key={section.id}>
                         <SectionCard
                           section={section}
                           completed={completedIds.has(section.id)}
                           userId={parseInt(userId!)}
                         />
-                        {idx < arr.length - 1 && <hr className="border-gray-200 my-2" />}
                       </div>
                     ))}
                   </div>
