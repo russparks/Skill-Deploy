@@ -203,14 +203,16 @@ export default function Dashboard() {
                 </Card>
 
                 {isExpanded && (
-                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {getSectionsForSubject(subject.id).map((section) => (
-                      <SectionCard
-                        key={section.id}
-                        section={section}
-                        completed={completedIds.has(section.id)}
-                        userId={parseInt(userId!)}
-                      />
+                  <div className="mt-3 flex flex-col">
+                    {getSectionsForSubject(subject.id).map((section, idx, arr) => (
+                      <div key={section.id}>
+                        <SectionCard
+                          section={section}
+                          completed={completedIds.has(section.id)}
+                          userId={parseInt(userId!)}
+                        />
+                        {idx < arr.length - 1 && <hr className="border-gray-200 my-2" />}
+                      </div>
                     ))}
                   </div>
                 )}
