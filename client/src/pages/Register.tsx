@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { PrivacyNotice } from "@/components/PrivacyNotice";
 import { useState } from "react";
-import gmiLogo from "@assets/gmi-logo_1773446695050.jpg";
+import gmiLogo from "@assets/gmi-logo_1773446846343.png";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -54,7 +54,7 @@ export default function Register() {
       <div className="w-full max-w-[520px] bg-white rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.08)] p-8 space-y-6">
 
         <div className="flex flex-col items-center gap-3 pb-2">
-          <img src={gmiLogo} alt="GMI Construction Group PLC" className="h-16 w-auto object-contain" />
+          <img src={gmiLogo} alt="GMI Construction Group PLC" className="w-52 h-auto object-contain" />
           <div className="text-center space-y-1">
             <h1 className="text-2xl font-bold text-gray-900" data-testid="text-title">Quick Skill</h1>
             <p className="text-gray-500 text-base">Onboarding The Works</p>
