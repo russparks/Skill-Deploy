@@ -4,7 +4,6 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -50,84 +49,92 @@ export default function Register() {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-4">
-        <div className="text-center space-y-1">
-          <div className="flex items-center justify-center gap-2">
-            <Zap className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold" data-testid="text-title">Quick Skill</h1>
+    <div className="min-h-screen bg-[#f4f6f8] flex flex-col items-center justify-center p-5">
+
+      <div className="w-full max-w-[520px] bg-white rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.08)] p-8 space-y-6">
+
+        <div className="flex flex-col items-center gap-3 pb-2">
+          <div className="w-14 h-16 bg-[#e5e7eb] rounded-lg flex items-center justify-center">
+            <Zap className="h-7 w-7 text-[#6b7280]" />
           </div>
-          <p className="text-muted-foreground text-lg font-medium">Onboarding The Works</p>
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl font-bold text-gray-900" data-testid="text-title">Quick Skill</h1>
+            <p className="text-gray-500 text-base">Onboarding The Works</p>
+          </div>
         </div>
 
-        <Card>
-          <CardContent className="p-6 space-y-5">
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold" data-testid="text-form-title">
-                Register for Data Management Training
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Fill out the form below to get started
-              </p>
-            </div>
+        <hr className="border-[#e5e7eb]" />
 
-            <Form {...form}>
-              <form noValidate onSubmit={form.handleSubmit((data) => mutation.mutate({ ...data, email: data.email.trim() }))} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input data-testid="input-name" placeholder="Enter your full name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input data-testid="input-email" type="email" placeholder="you@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="organization"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Organisation</FormLabel>
-                      <FormControl>
-                        <Input data-testid="input-organization" placeholder="Your company or organisation" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold text-gray-800" data-testid="text-form-title">
+            Register for Data Management Training
+          </h2>
+          <p className="text-sm text-gray-500">
+            Fill out the form below to get started
+          </p>
+        </div>
 
-                <PrivacyNotice checked={privacyAccepted} onCheckedChange={setPrivacyAccepted} />
+        <Form {...form}>
+          <form noValidate onSubmit={form.handleSubmit((data) => mutation.mutate({ ...data, email: data.email.trim() }))} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Full Name</FormLabel>
+                  <FormControl>
+                    <Input data-testid="input-name" placeholder="Enter your full name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Email</FormLabel>
+                  <FormControl>
+                    <Input data-testid="input-email" type="email" placeholder="you@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="organization"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Organisation</FormLabel>
+                  <FormControl>
+                    <Input data-testid="input-organization" placeholder="Your company or organisation" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <Button
-                  data-testid="button-register"
-                  type="submit"
-                  className="w-full"
-                  disabled={mutation.isPending || !privacyAccepted}
-                >
-                  {mutation.isPending ? "Registering..." : "Start Training"}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+            <PrivacyNotice checked={privacyAccepted} onCheckedChange={setPrivacyAccepted} />
+
+            <Button
+              data-testid="button-register"
+              type="submit"
+              className="w-full text-base py-5 font-bold"
+              disabled={mutation.isPending || !privacyAccepted}
+            >
+              {mutation.isPending ? "Registering..." : "Start Training →"}
+            </Button>
+          </form>
+        </Form>
+
       </div>
+
+      <p className="text-center text-gray-400 text-xs mt-6 pb-6">
+        Quick Skill — Onboarding The Works
+      </p>
+
     </div>
   );
 }
