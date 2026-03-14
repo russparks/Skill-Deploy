@@ -85,6 +85,7 @@ export default function TrainingViewer() {
           const allDone = subjectSections.every((s) => alreadyCompleted.has(s.id));
           if (allDone) {
             toast({ title: "Module complete!", description: "You've finished all sections in this module." });
+            sessionStorage.removeItem(`expandedSubject-${userId}`);
           }
           setLocation(`/dashboard/${userId}`);
         }
