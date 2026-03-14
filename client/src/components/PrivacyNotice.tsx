@@ -13,8 +13,8 @@ export function PrivacyNotice({
     <div className="space-y-3">
       <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
         <p className="text-xs text-rose-700 leading-relaxed">
-          Data is used only to deliver this training and deleted after{" "}
-          <span className="font-bold">24 hours</span>. Try to complete all
+          Data is used only to deliver this training and deleted{" "}
+          <span className="font-bold">24 hours after each registration</span>. Complete all
           modules in one session. Early deletion available on request.
         </p>
       </div>

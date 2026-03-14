@@ -128,7 +128,7 @@ export default function Dashboard() {
       {deletionStatus && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
           <p className="text-xs text-rose-700 leading-relaxed">
-            Your data will be deleted in <strong>{deletionStatus.hoursRemaining} hours</strong>. Complete all modules before then.
+            Your data will be deleted <strong>24 hours after each registration</strong>. Complete all modules before then.
           </p>
         </div>
       )}
