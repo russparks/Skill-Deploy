@@ -55,21 +55,18 @@ export default function Register() {
 
         <div className="flex flex-col items-center gap-3 pb-2">
           <img src={gmiLogo} alt="GMI Construction Group PLC" className="w-52 h-auto object-contain" />
-          <div className="text-center space-y-1">
-            <h1 className="text-2xl font-bold text-gray-900" data-testid="text-title">Quick Skill</h1>
-            <p className="text-gray-500 text-base">Onboarding The Works</p>
+          <hr className="w-full border-[#e5e7eb] mt-1" />
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900" data-testid="text-title">Skill Deploy | Project Onboarding</h1>
           </div>
         </div>
 
         <hr className="border-[#e5e7eb]" />
 
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-gray-800" data-testid="text-form-title">
-            Register for Data Management Training
-          </h2>
-          <p className="text-sm text-gray-500">
+        <div>
+          <h2 className="text-base font-medium text-gray-600" data-testid="text-form-title">
             Fill out the form below to get started
-          </p>
+          </h2>
         </div>
 
         <Form {...form}>
