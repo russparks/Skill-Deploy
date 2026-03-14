@@ -156,7 +156,7 @@ export default function Dashboard() {
             return (
               <div key={subject.id}>
                 <Card
-                  className={`cursor-pointer transition-all hover:shadow-md ${isSubjectComplete ? "border-green-300 dark:border-green-700" : ""}`}
+                  className={`cursor-pointer transition-all hover:shadow-md ${isSubjectComplete ? "border-green-300 dark:border-green-700" : isExpanded ? "border-primary bg-primary/5 shadow-md" : ""}`}
                   data-testid={`card-subject-${subject.id}`}
                   onClick={() => {
                     const newVal = isExpanded ? null : subject.id;
