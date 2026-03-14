@@ -199,7 +199,7 @@ export default function Dashboard() {
                 </Card>
 
                 {isExpanded && (
-                  <div className="mt-3 flex flex-col">
+                  <div className="mt-3 flex flex-col gap-3">
                     {getSectionsForSubject(subject.id).map((section) => (
                       <div key={section.id}>
                         <SectionCard
